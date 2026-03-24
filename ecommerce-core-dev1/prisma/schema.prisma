@@ -1,0 +1,78 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum ClientPlan {
+  STARTER
+  PRO
+  ENTERPRISE
+}
+
+enum PipelineType {
+  PRODUCT_DESCRIPTION
+  CATALOG_ENRICHMENT
+  RETURN_CLASSIFICATION
+}
+
+enum JobStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+model Client {
+  id             String      @id @default(uuid())
+  name           String
+  shopify_domain String?
+  plan           ClientPlan  @default(STARTER)
+  created_at     DateTime    @default(now())
+
+  projects       Project[]
+  ai_jobs        AIJob[]
+}
+
+model Project {
+  id         String       @id @default(uuid())
+  client_id  String
+  type       PipelineType
+  status     String
+  config     Json
+  
+  client     Client       @relation(fields: [client_id], references: [id])
+  ai_jobs    AIJob[]
+}
+
+model AIJob {
+  id           String       @id @default(uuid())
+  project_id   String?
+  client_id    String
+  type         PipelineType
+  input        Json
+  output       Json?
+  model_used   String?
+  tokens_used  Int?
+  cost_usd     Decimal?
+  status       JobStatus    @default(PENDING)
+  error        String?
+  created_at   DateTime     @default(now())
+  updated_at   DateTime     @updatedAt
+
+  client       Client       @relation(fields: [client_id], references: [id])
+  project      Project?     @relation(fields: [project_id], references: [id])
+}
+
+model PromptTemplate {
+  id         String   @id @default(uuid())
+  name       String
+  version    Int
+  content    String
+  variables  Json
+  is_active  Boolean  @default(true)
+  created_at DateTime @default(now())
+}
