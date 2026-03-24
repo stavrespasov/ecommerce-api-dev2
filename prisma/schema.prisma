@@ -1,0 +1,34 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// Additive models for Dev2 services
+model ApiKey {
+  id          String   @id @default(cuid())
+  clientId    String
+  keyHash     String
+  prefix      String
+  name        String?
+  lastUsedAt  DateTime?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+
+  @@index([clientId])
+}
+
+model WebhookLog {
+  id           String   @id @default(cuid())
+  clientId     String
+  provider     String
+  eventType    String
+  rawPayload   Json
+  receivedAt   DateTime @default(now())
+
+  @@index([clientId])
+  @@index([provider, eventType])
+}
